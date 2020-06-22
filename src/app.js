@@ -9,10 +9,36 @@ app.use(cors());
 
 const repositories = [];
 
+function logRequests(request, response, next) {
+  const { method, url } = request;
+
+  const logLabel = `[${method.toUpperCase()}] ${url}`;
+
+  console.log(logLabel);
+
+  return next();
+}
+
+function validateProjectId(request, response, next) {
+  const { id } = request.params;
+
+  if(!isUuid(id)) {
+      return response.status(400).json({ error: 'Invalid project ID.' });
+  }
+
+  return next();
+}
+
+app.use(logRequests);
+app.use('/projects/:id', validateProjectId);
+
 app.get('/repositories', (request, response) => {
-      response.send(repositories)
-    }
-)
+  const { title } = request.query;
+
+  const results = title ? repositories.filter(repo => repo.title.includes(title)) : repositories;
+
+  return response.json(results);
+});
 
 
 app.post('/repositories', (request, response) => {
